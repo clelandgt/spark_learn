@@ -9,6 +9,8 @@ import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.api.java.function.VoidFunction;
 import scala.Tuple2;
 
+import java.util.List;
+
 
 public class LogApp {
 
@@ -16,9 +18,24 @@ public class LogApp {
         SparkConf sparkConf = new SparkConf().setAppName("LogApp").setMaster("local");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
         JavaRDD<String> rdd = sc.textFile("hdfs://header:8020/data/input/access.log");
+
         JavaPairRDD<String, LogInfo> mapPairRDD = mapToPairRDD(rdd);
-        JavaPairRDD<String, LogInfo> reduceByKey = aggreByDeviceID(mapPairRDD);
-        printAggreByDeviceID(reduceByKey);
+        JavaPairRDD<String, LogInfo> aggreRDD = aggreByDeviceID(mapPairRDD);
+        JavaPairRDD<LogSort, String> mapPairSortRDD = mapToPairSortRDD(aggreRDD);
+
+        JavaPairRDD<LogSort, String> sortRDD = mapPairSortRDD.sortByKey(false);
+        List<Tuple2<LogSort, String>> list = sortRDD.take(10);
+        for(Tuple2<LogSort, String> logSortStringTuple2: list){
+            System.out.println(
+                    " deviceID: " + logSortStringTuple2._2
+                            +  " upTraffic: " + logSortStringTuple2._1.getUpTraffic()
+                            +  " downTraffic: " + logSortStringTuple2._1.getDownTraffic()
+                            +  " timeStamp: " + logSortStringTuple2._1.getTimeStamp()
+
+            );
+        }
+
+        //printAggreByDeviceID(aggreRDD);
     }
 
     /**
@@ -79,6 +96,19 @@ public class LogApp {
                                 +  " downTraffic: " + stringLogInfoTuple2._2.getDownTraffic()
 
                 );
+            }
+        });
+    }
+
+    private static JavaPairRDD<LogSort, String> mapToPairSortRDD(JavaPairRDD<String, LogInfo> aggreRDD){
+        return aggreRDD.mapToPair(new PairFunction<Tuple2<String, LogInfo>, LogSort, String>() {
+            public Tuple2<LogSort, String> call(Tuple2<String, LogInfo> stringLogInfoTuple2) throws Exception {
+                String deviceID = stringLogInfoTuple2._1;
+                long timeStamp = stringLogInfoTuple2._2.getTimeStamp();
+                long upTraffic = stringLogInfoTuple2._2.getUpTraffic();
+                long downTraffic = stringLogInfoTuple2._2.getDownTraffic();
+                LogSort logSort = new LogSort(timeStamp, upTraffic, downTraffic);
+                return new Tuple2(logSort, deviceID);
             }
         });
     }
