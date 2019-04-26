@@ -12,5 +12,44 @@
 ## 运行
 
 ``` shell
-$ spark-submit --class club.cleland.spark_learn.kfk_log_analyze.WordCountJava  kfk_log_analyze-1.0-SNAPSHOT.jar
+$ spark2-submit --class club.cleland.spark_learn.kfk_log_analyze.WordCountJava  kfk_log_analyze-1.0-SNAPSHOT.jar  # java版本
+$ spark2-submit log_app.py
+```
+
+
+## Hive
+
+```
+-- 表结构
+DROP TABLE access_log;
+CREATE TABLE IF NOT EXISTS access_log(
+    time_stamp STRING,
+    device_id STRING,
+    up_traffic BIGINT,
+    down_traffic BIGINT
+)
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+WITH serdeproperties('separatorChar'='\t','serialization.null.format'=' ')
+TBLPROPERTIES ("skip.header.line.count"="1");
+
+-- 加载数据
+LOAD DATA INPATH '/data/input/access.log' OVERWRITE INTO TABLE access_log;
+
+-- 得到最终结果
+SELECT
+    device_id
+    ,time_stamp
+    ,up_traffic
+    ,down_traffic
+FROM (
+    SELECT
+        device_id
+        ,MIN(time_stamp) as time_stamp
+        ,SUM(up_traffic) as up_traffic
+        ,SUM(down_traffic) as down_traffic
+    FROM access_log
+    GROUP BY device_id
+) t
+ORDER BY up_traffic DESC, down_traffic DESC, time_stamp DESC
+LIMIT 10
 ```

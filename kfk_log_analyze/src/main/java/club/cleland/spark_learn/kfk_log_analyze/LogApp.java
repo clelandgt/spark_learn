@@ -81,7 +81,7 @@ public class LogApp {
     }
 
     /**
-     * 打印：计算每个设备(deviceID)总上行流量之和与下行流量之和(时间戳取最小的)
+     * 打印：按照设备deviceID聚合后的数据
      * @param reduceByKey
      */
     private static void printAggreByDeviceID(JavaPairRDD<String, LogInfo> reduceByKey){
@@ -100,6 +100,11 @@ public class LogApp {
         });
     }
 
+    /**
+     * 转化PairRDD <String, LogInfo> -> <LogSort, String>
+     * @param aggreRDD
+     * @return
+     */
     private static JavaPairRDD<LogSort, String> mapToPairSortRDD(JavaPairRDD<String, LogInfo> aggreRDD){
         return aggreRDD.mapToPair(new PairFunction<Tuple2<String, LogInfo>, LogSort, String>() {
             public Tuple2<LogSort, String> call(Tuple2<String, LogInfo> stringLogInfoTuple2) throws Exception {
