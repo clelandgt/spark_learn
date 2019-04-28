@@ -47,6 +47,8 @@ public class TransformationJava {
         groupByKey();
         reduceByKey();
         sortByey();
+        join();
+        cogroup();
     }
 
     /**
@@ -175,6 +177,63 @@ public class TransformationJava {
             }
         });
     }
+
+
+    /**
+     * 数据集一：(1, henry)    => <1, <herry, 90>>
+     * 数据集二：（1, 90）
+     */
+    public static void join(){
+        JavaSparkContext sc = getSc();
+
+        JavaPairRDD rdd1 = sc.parallelizePairs(Arrays.asList(
+            new Tuple2<Integer, String>(2,"leo"),
+            new Tuple2<Integer, String>(3,"chenry"),
+            new Tuple2<Integer, String>(4,"lili")
+        ));
+        JavaPairRDD rdd2 = sc.parallelizePairs(Arrays.asList(
+                new Tuple2<Integer, Integer>(2,88),
+                new Tuple2<Integer, Integer>(3,99),
+                new Tuple2<Integer, Integer>(4,100)
+        ));
+
+        JavaPairRDD<Integer, Tuple2<String, Integer>> joinRDD = rdd1.join(rdd2);
+        joinRDD.foreach(new VoidFunction<Tuple2<Integer, Tuple2<String, Integer>>>() {
+            public void call(Tuple2<Integer, Tuple2<String, Integer>> integerTuple2Tuple2) throws Exception {
+                System.out.println(integerTuple2Tuple2._1 + " " + integerTuple2Tuple2._2._1 + " " + integerTuple2Tuple2._2._2);
+            }
+        });
+    }
+
+    /**
+     * 数据集一 ：(2,leo)                      cogroup =>   <2,<leo,(88,90,55,78)>>
+     * 数据集二：(2,88)(2,90)(2,55)(2,78)                   <Integer,Tuple2<Iterable,Iterable>>
+     */
+    public static void cogroup(){
+        JavaSparkContext sc = getSc();
+
+        JavaPairRDD rdd1 = sc.parallelizePairs(Arrays.asList(
+                new Tuple2<Integer, String>(2,"leo"),
+                new Tuple2<Integer, String>(3,"chenry"),
+                new Tuple2<Integer, String>(4,"lili")
+        ));
+        JavaPairRDD rdd2 = sc.parallelizePairs(Arrays.asList(
+                new Tuple2<Integer, Integer>(2,88),
+                new Tuple2<Integer, Integer>(2,90),
+                new Tuple2<Integer, Integer>(2,55),
+                new Tuple2<Integer, Integer>(2,78),
+                new Tuple2<Integer, Integer>(3,99),
+                new Tuple2<Integer, Integer>(4,100)
+        ));
+
+        JavaPairRDD<Integer, Tuple2<Iterable, Iterable>> coRDD = rdd1.cogroup(rdd2);
+        coRDD.foreach(new VoidFunction<Tuple2<Integer, Tuple2<Iterable, Iterable>>>() {
+            public void call(Tuple2<Integer, Tuple2<Iterable, Iterable>> integerTuple2Tuple2) throws Exception {
+                System.out.println(integerTuple2Tuple2._1 + " " + integerTuple2Tuple2._2._1 + " " + integerTuple2Tuple2._2._2);
+            }
+        });
+    }
+
 
     /**
      * 打印RDD
