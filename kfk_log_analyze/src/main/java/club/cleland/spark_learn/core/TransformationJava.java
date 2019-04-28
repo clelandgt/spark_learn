@@ -2,11 +2,13 @@ package club.cleland.spark_learn.core;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.SparkSession;
 
 import java.util.Arrays;
+import java.util.Iterator;
 
 
 public class TransformationJava {
@@ -38,6 +40,7 @@ public class TransformationJava {
     public static void main(String[] args){
         map();
         filter();
+        flatMap();
     }
 
     /**
@@ -67,6 +70,21 @@ public class TransformationJava {
         });
 
         prinfRDD(filterRDD);
+    }
+
+    /**
+     * 切分文本的单词
+     */
+    public static void flatMap(){
+        JavaSparkContext sc = getSc();
+        JavaRDD<String> rdd = sc.parallelize(Arrays.asList("hadoop,hive,spark", "python,spark,hive"));
+        JavaRDD<String> flatRDD = rdd.flatMap(new FlatMapFunction<String, String>() {
+            public Iterator<String> call(String s) throws Exception {
+                return Arrays.asList(s.split(",")).iterator();
+            }
+        });
+
+        prinfRDD(flatRDD);
     }
 
     /**
