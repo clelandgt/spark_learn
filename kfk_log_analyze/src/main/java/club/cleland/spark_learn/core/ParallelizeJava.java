@@ -18,11 +18,11 @@ import java.util.List;
 </dependency>
  */
 
-public class Parallelize {
+public class ParallelizeJava {
     public static void main(String[] args){
         SparkSession spark = SparkSession
                 .builder()
-                .appName("Parallelize Test")
+                .appName("ParallelizeJava Test")
                 .master("local[1]")
                 .getOrCreate();
         JavaSparkContext sc = new JavaSparkContext(spark.sparkContext());
