@@ -1,11 +1,14 @@
 package club.cleland.spark_learn.core;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.SparkSession;
+import scala.Tuple2;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -41,6 +44,9 @@ public class TransformationJava {
         map();
         filter();
         flatMap();
+        groupByKey();
+        reduceByKey();
+        sortByey();
     }
 
     /**
@@ -85,6 +91,89 @@ public class TransformationJava {
         });
 
         prinfRDD(flatRDD);
+    }
+
+    /**
+     * class_1 90      groupbykey  <class_1,(90,99,86)>  <class_2,(78,76,90>
+     * class_2 78
+     * class_1 99
+     * class_2 76
+     * class_2 90
+     * class_1 86
+     */
+    public static void groupByKey(){
+        JavaSparkContext sc = getSc();
+        JavaPairRDD rdd = sc.parallelizePairs(Arrays.asList(
+                new Tuple2<String, Integer>("class_1", 90),
+                new Tuple2<String, Integer>("class_2", 78),
+                new Tuple2<String, Integer>("class_1", 99),
+                new Tuple2<String, Integer>("class_2", 76),
+                new Tuple2<String, Integer>("class_2", 90),
+                new Tuple2<String, Integer>("class_1", 86)
+        ));
+
+        JavaPairRDD groupRDD = rdd.groupByKey();
+        groupRDD.foreach(new VoidFunction<Tuple2<String, Iterable>>() {
+            public void call(Tuple2<String, Iterable> o) throws Exception {
+                System.out.println(o._1);
+                Iterator iterator = o._2.iterator();
+                while(iterator.hasNext()){
+                    System.out.println(iterator.next());
+                }
+            }
+        });
+    }
+
+    /**
+     * class_1 90      求和：reducebykey  <class_1,sum(90,99,86)>  <class_2, sum(78,76,90>
+     * class_2 78
+     * class_1 99
+     * class_2 76
+     * class_2 90
+     * class_1 86
+     */
+    public static void reduceByKey(){
+        JavaSparkContext sc = getSc();
+        JavaPairRDD rdd = sc.parallelizePairs(Arrays.asList(
+                new Tuple2<String, Integer>("class_1", 90),
+                new Tuple2<String, Integer>("class_2", 78),
+                new Tuple2<String, Integer>("class_1", 99),
+                new Tuple2<String, Integer>("class_2", 76),
+                new Tuple2<String, Integer>("class_2", 90),
+                new Tuple2<String, Integer>("class_1", 86)
+        ));
+
+        JavaPairRDD reduceRDD = rdd.reduceByKey(new Function2<Integer, Integer, Integer>() {
+            public Integer call(Integer v1, Integer v2) throws Exception {
+                return v1 + v2;
+            }
+        });
+
+        reduceRDD.foreach(new VoidFunction<Tuple2<String, Integer>>() {
+            public void call(Tuple2 value) throws Exception {
+                System.out.println("key: " + value._1 + " value: " + value._2);
+            }
+        });
+
+    }
+
+    /**
+     * <90,henry>
+     * <88,henry>    ->   <88,henry> <90,henry>
+     */
+    public static void sortByey(){
+        JavaSparkContext sc = getSc();
+        JavaPairRDD rdd = sc.parallelizePairs(Arrays.asList(
+                new Tuple2<Integer, String>(88, "henry"),
+                new Tuple2<Integer, String>(90, "henry")
+        ));
+
+        JavaPairRDD sortedRDD = rdd.sortByKey(true);
+        sortedRDD.foreach(new VoidFunction<Tuple2<String, Integer>>() {
+            public void call(Tuple2 value) throws Exception {
+                System.out.println("key: " + value._1 + " value: " + value._2);
+            }
+        });
     }
 
     /**
