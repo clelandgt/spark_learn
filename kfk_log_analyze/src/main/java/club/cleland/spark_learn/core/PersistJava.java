@@ -18,6 +18,7 @@ public class PersistJava {
 
     public static void main(String[] args) {
         JavaSparkContext sc = getSc();
+        // 读取本地文件
         JavaRDD rdd = sc.textFile("file:///Users/cleland/Desktop/access.log").cache();
         long begin1 = System.currentTimeMillis();
         System.out.println(rdd.count());
