@@ -3,11 +3,11 @@ package club.cleland.spark_learn.core;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.VoidFunction;
+import org.apache.spark.api.java.function.*;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.sources.In;
+import org.codehaus.janino.Java;
+import scala.Int;
 import scala.Tuple2;
 
 import java.util.Arrays;
@@ -41,14 +41,19 @@ public class TransformationJava {
     }
 
     public static void main(String[] args){
-        map();
-        filter();
-        flatMap();
-        groupByKey();
-        reduceByKey();
-        sortByey();
-        join();
-        cogroup();
+//        map();
+//        filter();
+//        flatMap();
+//        groupByKey();
+//        reduceByKey();
+//        sortByey();
+//        join();
+//        cogroup();
+//        sample();
+//        union();
+//        intersection();
+//        distinct();
+        aggregareByKey();
     }
 
     /**
@@ -234,6 +239,83 @@ public class TransformationJava {
         });
     }
 
+    /**
+     * 随机抽取
+     */
+    public static void sample(){
+        JavaSparkContext sc = getSc();
+        JavaRDD rdd = sc.parallelize(Arrays.asList("cherry", "herry", "leo", "ben", "lili"));
+        JavaRDD sampleValues = rdd.sample(false, 0.3);
+        for(Object o: sampleValues.collect()){
+            System.out.println(o);
+        }
+    }
+
+    /**
+     * union合并
+     */
+    public static void union(){
+        JavaSparkContext sc = getSc();
+        JavaRDD rdd1 = sc.parallelize(Arrays.asList("cherry","herry"));
+        JavaRDD rdd2 = sc.parallelize(Arrays.asList("ben","leo"));
+        JavaRDD unionRDD = rdd1.union(rdd2);
+
+        for(Object o: unionRDD.collect()){
+            System.out.println(o);
+        }
+
+    }
+
+    /**
+     * 获取两个rdd里相同的数据
+     */
+    public static void intersection(){
+        JavaSparkContext sc = getSc();
+        JavaRDD rdd1 = sc.parallelize(Arrays.asList("cherry","herry", "tom"));
+        JavaRDD rdd2 = sc.parallelize(Arrays.asList("ben","leo", "tom", "herry"));
+        JavaRDD interRDD = rdd1.intersection(rdd2);
+
+        for(Object o: interRDD.collect()){
+            System.out.println(o);
+        }
+    }
+
+    public static void distinct(){
+        JavaSparkContext sc = getSc();
+        JavaRDD rdd = sc.parallelize(Arrays.asList("cherry","herry", "tom", "herry", "tom"));
+        JavaRDD distRDD = rdd.distinct();
+
+        for(Object o: distRDD.collect()){
+            System.out.println(o);
+        }
+    }
+
+    /**
+     * 与reduceByKey类似，只是aggregareByKey做reduce，需要明细指明：单个map里的聚合方式和最终的聚合方式
+     */
+    public static void aggregareByKey(){
+        JavaSparkContext sc = getSc();
+        JavaRDD rdd = sc.parallelize(Arrays.asList("hadoop", "hadoop", "python", "spark", "hadoop", "python"), 2);
+        JavaPairRDD words = rdd.mapToPair(new PairFunction<String, String, Integer>() {
+            public Tuple2 call(String word) throws Exception {
+                return new Tuple2(word, 1);
+            }
+        });
+
+        JavaPairRDD reduceWords = words.aggregateByKey(0, new Function2<Integer, Integer, Integer>() {
+            public Integer call(Integer v1, Integer v2) throws Exception {
+                return v1 + v2;
+            }
+        }, new Function2<Integer, Integer, Integer>() {
+            public Integer call(Integer v1, Integer v2) throws Exception {
+                return v1 + v2;
+            }
+        });
+
+        for(Object o: reduceWords.collect()){
+            System.out.println(o);
+        }
+    }
 
     /**
      * 打印RDD
