@@ -50,7 +50,7 @@ public class VarJava {
         JavaSparkContext sc = getsc();
         JavaRDD<Integer> rdd = sc.parallelize(Arrays.asList(1,2,3,4,5));
 
-        final Accumulator accumulator = sc.accumulator(5);
+        final Accumulator accumulator = sc.accumulator(0);
         rdd.foreach(new VoidFunction<Integer>() {
             public void call(Integer integer) throws Exception {
                 accumulator.add(integer);
