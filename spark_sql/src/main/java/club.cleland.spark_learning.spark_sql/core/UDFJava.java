@@ -1,4 +1,4 @@
-package club.cleland.spark_learning.spark_sql;
+package club.cleland.spark_learning.spark_sql.core;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;

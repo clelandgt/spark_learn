@@ -1,4 +1,4 @@
-package club.cleland.spark_learning.spark_sql;
+package club.cleland.spark_learning.spark_sql.core;
 
 import java.io.Serializable;
 
